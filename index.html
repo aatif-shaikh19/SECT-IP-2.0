@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Sentiment Analysis Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero-section {
+            text-align: center;
+            padding: 3rem 0;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero-subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        /* Configuration Section */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            cursor: pointer;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #333;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        /* Metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card.positive {
+            background: linear-gradient(135deg, #10B981, #34D399);
+        }
+
+        .metric-card.negative {
+            background: linear-gradient(135deg, #EF4444, #F87171);
+        }
+
+        .metric-card.neutral {
+            background: linear-gradient(135deg, #6B7280, #9CA3AF);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .metric-percentage {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+        }
+
+        /* Tweet Samples */
+        .tweets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tweet-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid #1DA1F2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .tweet-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .tweet-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .tweet-meta {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .tweet-sentiment {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .sentiment-positive {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .sentiment-negative {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .sentiment-neutral {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* Loading States */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar-content {
+                padding: 0 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-container {
+                min-height: 300px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tweets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .metric-value {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Mock data for demonstration
+        const mockTweets = [
+            {
+                id: 1,
+                text: "This new Python library is absolutely amazing! Makes data analysis so much easier.",
+                sentiment: "Positive",
+                polarity: 0.8,
+                subjectivity: 0.6,
+                like_count: 45,
+                retweet_count: 12,
+                reply_count: 8,
+                created_at: new Date().toISOString()
+            },
+            {
+                id: 2,
+                text: "Really disappointed with this software update. So many bugs and crashes.",
+                sentiment: "Negative",
+                polarity: -0.7,
+                subjectivity: 0.7,
+                like_count: 3,
+                retweet_count: 1,
+                reply_count: 5,
+                created_at: new Date().toISOString()
+            },
+            {
+                id: 3,
+                text: "The weather today is quite normal. Nothing special to report.",
+                sentiment: "Neutral",
+                polarity: 0.0,
+                subjectivity: 0.3,
+                like_count: 8,
+                retweet_count: 2,
+                reply_count: 1,
+                created_at: new Date().toISOString()
+            }
+        ];
+
+        // Navigation Component
+        const Navigation = ({ activeSection, setActiveSection }) => {
+            const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+            const navItems = [
+                { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+                { id: 'analytics', label: 'Analytics', icon: '📈' },
+                { id: 'tweets', label: 'Tweets', icon: '🐦' },
+                { id: 'settings', label: 'Settings', icon: '⚙️' }
+            ];
+
+            return (
+                <nav className="navbar">
+                    <div className="navbar-content">
+                        <div className="logo">
+                            📊 Sentiment Analyzer
+                        </div>
+                        <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
+                            {navItems.map(item => (
+                                <li 
+                                    key={item.id}
+                                    className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setActiveSection(item.id);
+                                        setIsMobileMenuOpen(false);
+                                    }}
+                                >
+                                    {item.icon} {item.label}
+                                </li>
+                            ))}
+                        </ul>
+                        <button 
+                            className="mobile-menu-btn"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        >
+                            ☰
+                        </button>
+                    </div>
+                </nav>
+            );
+        };
+
+        // Configuration Component
+        const ConfigurationSection = ({ config, setConfig, onAnalyze, isLoading }) => {
+            return (
+                <div className="card fade-in">
+                    <div className="card-header">
+                        <span className="card-icon">⚙️</span>
+                        <h2 className="card-title">Configuration</h2>
+                    </div>
+                    
+                    <div className="config-grid">
+                        <div>
+                            <div className="form-group">
+                                <label className="form-label">Twitter API Bearer Token</label>
+                                <input
+                                    type="password"
+                                    className="form-input"
+                                    placeholder="Enter your Bearer Token"
+                                    value={config.bearerToken}
+                                    onChange={(e) => setConfig({...config, bearerToken: e.target.value})}
+                                />
+                            </div>
+                            
+                            <div className="form-group">
+                                <label className="form-label">Search Query</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    placeholder="e.g., python programming"
+                                    value={config.searchQuery}
+                                    onChange={(e) => setConfig({...config, searchQuery: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div className="form-group">
+                                <label className="form-label">Number of Tweets: {config.tweetCount}</label>
+                                <div className="slider-container">
+                                    <input
+                                        type="range"
+                                        min="10"
+                                        max="500"
+                                        step="10"
+                                        className="slider"
+                                        value={config.tweetCount}
+                                        onChange={(e) => setConfig({...config, tweetCount: parseInt(e.target.value)})}
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label className="form-label">Language</label>
+                                <select
+                                    className="form-select"
+                                    value={config.language}
+                                    onChange={(e) => setConfig({...config, language: e.target.value})}
+                                >
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            
+                            <div className="checkbox-container">
+                                <input
+                                    type="checkbox"
+                                    className="checkbox"
+                                    checked={config.realTime}
+                                    onChange={(e) => setConfig({...config, realTime: e.target.checked})}
+                                />
+                                <label>Real-time Analysis</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        className="btn btn-primary"
+                        onClick={onAnalyze}
+                        disabled={isLoading || !config.bearerToken || !config.searchQuery}
+                    >
+                        {isLoading ? '🔄 Analyzing...' : '🔍 Search & Analyze'}
+                    </button>
+                </div>
+            );
+        };
+
+        // Metrics Component
+        const MetricsSection = ({ tweets }) => {
+            const totalTweets = tweets.length;
+            const positive = tweets.filter(t => t.sentiment === 'Positive').length;
+            const negative = tweets.filter(t => t.sentiment === 'Negative').length;
+            const neutral = tweets.filter(t => t.sentiment === 'Neutral').length;
+
+            const metrics = [
+                {
+                    label: 'Total Tweets',
+                    value: totalTweets,
+                    icon: '📝',
+                    className: ''
+                },
+                {
+                    label: 'Positive',
+                    value: positive,
+                    percentage: totalTweets > 0 ? ((positive / totalTweets) * 100).toFixed(1) : 0,
+                    icon: '😊',
+                    className: 'positive'
+                },
+                {
+                    label: 'Negative',
+                    value: negative,
+                    percentage: totalTweets > 0 ? ((negative / totalTweets) * 100).toFixed(1) : 0,
+                    icon: '😞',
+                    className: 'negative'
+                },
+                {
+                    label: 'Neutral',
+                    value: neutral,
+                    percentage: totalTweets > 0 ? ((neutral / totalTweets) * 100).toFixed(1) : 0,
+                    icon: '😐',
+                    className: 'neutral'
+                }
+            ];
+
+            return (
+                <div className="metrics-grid fade-in">
+                    {metrics.map((metric, index) => (
+                        <div key={index} className={`metric-card ${metric.className}`}>
+                            <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>
+                                {metric.icon}
+                            </div>
+                            <div className="metric-value">{metric.value}</div>
+                            <div className="metric-label">{metric.label}</div>
+                            {metric.percentage && (
+                                <div className="metric-percentage">{metric.percentage}%</div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        // Charts Component
+        const ChartsSection = ({ tweets }) => {
+            const chartRef1 = useRef();
+            const chartRef2 = useRef();
+
+            useEffect(() => {
+                if (tweets.length > 0) {
+                    // Sentiment Distribution Pie Chart
+                    const sentimentCounts = tweets.reduce((acc, tweet) => {
+                        acc[tweet.sentiment] = (acc[tweet.sentiment] || 0) + 1;
+                        return acc;
+                    }, {});
+
+                    const pieData = [{
+                        values: Object.values(sentimentCounts),
+                        labels: Object.keys(sentimentCounts),
+                        type: 'pie',
+                        marker: {
+                            colors: ['#10B981', '#EF4444', '#6B7280']
+                        }
+                    }];
+
+                    const pieLayout = {
+                        title: 'Sentiment Distribution',
+                        height: 400,
+                        margin: { t: 50, b: 50, l: 50, r: 50 }
+                    };
+
+                    Plotly.newPlot(chartRef1.current, pieData, pieLayout);
+
+                    // Polarity Distribution Histogram
+                    const polarityData = [{
+                        x: tweets.map(t => t.polarity),
+                        type: 'histogram',
+                        nbinsx: 20,
+                        marker: {
+                            color: '#667eea'
+                        }
+                    }];
+
+                    const histLayout = {
+                        title: 'Polarity Distribution',
+                        xaxis: { title: 'Polarity Score' },
+                        yaxis: { title: 'Frequency' },
+                        height: 400,
+                        margin: { t: 50, b: 50, l: 50, r: 50 }
+                    };
+
+                    Plotly.newPlot(chartRef2.current, polarityData, histLayout);
+                }
+            }, [tweets]);
+
+            return (
+                <div className="charts-grid slide-up">
+                    <div className="chart-container">
+                        <div ref={chartRef1}></div>
+                    </div>
+                    <div className="chart-container">
+                        <div ref={chartRef2}></div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Tweet Samples Component
+        const TweetSamplesSection = ({ tweets }) => {
+            const getSentimentClass = (sentiment) => {
+                return `sentiment-${sentiment.toLowerCase()}`;
+            };
+
+            const groupedTweets = tweets.reduce((acc, tweet) => {
+                if (!acc[tweet.sentiment]) acc[tweet.sentiment] = [];
+                if (acc[tweet.sentiment].length < 3) {
+                    acc[tweet.sentiment].push(tweet);
+                }
+                return acc;
+            }, {});
+
+            return (
+                <div className="card slide-up">
+                    <div className="card-header">
+                        <span className="card-icon">🐦</span>
+                        <h2 className="card-title">Sample Tweets</h2>
+                    </div>
+                    
+                    <div className="tweets-grid">
+                        {['Positive', 'Negative', 'Neutral'].map(sentiment => (
+                            <div key={sentiment}>
+                                <h3 style={{marginBottom: '1rem', color: '#333'}}>
+                                    {sentiment === 'Positive' ? '😊' : sentiment === 'Negative' ? '😞' : '😐'} {sentiment} Tweets
+                                </h3>
+                                {(groupedTweets[sentiment] || []).map(tweet => (
+                                    <div key={tweet.id} className="tweet-card">
+                                        <div className="tweet-text">
+                                            {tweet.text.length > 150 ? tweet.text.substring(0, 150) + '...' : tweet.text}
+                                        </div>
+                                        <div className="tweet-meta">
+                                            <span className={`tweet-sentiment ${getSentimentClass(tweet.sentiment)}`}>
+                                                {tweet.sentiment}
+                                            </span>
+                                            <div style={{display: 'flex', gap: '1rem'}}>
+                                                <span>👍 {tweet.like_count}</span>
+                                                <span>🔄 {tweet.retweet_count}</span>
+                                                <span>💬 {tweet.reply_count}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Loading Component
+        const LoadingComponent = () => (
+            <div className="loading">
+                <div className="spinner"></div>
+                <h3>Analyzing Tweets...</h3>
+                <p>Please wait while we fetch and analyze the data.</p>
+            </div>
+        );
+
+        // Main Dashboard Component
+        const Dashboard = () => {
+            const [activeSection, setActiveSection] = useState('dashboard');
+            const [config, setConfig] = useState({
+                bearerToken: '',
+                searchQuery: 'python programming',
+                tweetCount: 100,
+                language: 'en',
+                realTime: true
+            });
+            const [tweets, setTweets] = useState([]);
+            const [isLoading, setIsLoading] = useState(false);
+
+            const handleAnalyze = async () => {
+                setIsLoading(true);
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    // For demo purposes, use mock data
+                    const generatedTweets = [];
+                    const sentiments = ['Positive', 'Negative', 'Neutral'];
+                    const sampleTexts = {
+                        'Positive': [
+                            "This is amazing! Love the new features.",
+                            "Absolutely fantastic work on this project!",
+                            "Great job everyone, this is incredible!",
+                            "Best tool I've used in years, highly recommend!"
+                        ],
+                        'Negative': [
+                            "This is terrible, so many bugs and issues.",
+                            "Disappointing experience, doesn't work as expected.",
+                            "Worst update ever, completely broken now.",
+                            "Frustrated with all these problems and crashes."
+                        ],
+                        'Neutral': [
+                            "The weather is okay today, nothing special.",
+                            "Regular meeting scheduled for tomorrow morning.",
+                            "Standard procedure, nothing out of the ordinary.",
+                            "Normal day at work, same as usual."
+                        ]
+                    };
+
+                    for (let i = 0; i < config.tweetCount; i++) {
+                        const sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+                        const texts = sampleTexts[sentiment];
+                        const text = texts[Math.floor(Math.random() * texts.length)];
+                        
+                        generatedTweets.push({
+                            id: i + 1,
+                            text: text,
+                            sentiment: sentiment,
+                            polarity: sentiment === 'Positive' ? Math.random() * 0.8 + 0.2 : 
+                                     sentiment === 'Negative' ? -(Math.random() * 0.8 + 0.2) : 
+                                     (Math.random() - 0.5) * 0.4,
+                            subjectivity: Math.random(),
+                            like_count: Math.floor(Math.random() * 100),
+                            retweet_count: Math.floor(Math.random() * 50),
+                            reply_count: Math.floor(Math.random() * 30),
+                            created_at: new Date().toISOString()
+                        });
+                    }
+
+                    setTweets(generatedTweets);
+                    setIsLoading(false);
+                }, 2000);
+            };
+
+            const renderContent = () => {
+                switch (activeSection) {
+                    case 'dashboard':
+                        return (
+                            <>
+                                <div className="hero-section">
+                                    <h1 className="hero-title">Social Media Sentiment Analysis</h1>
+                                    <p className="hero-subtitle">Real-time Twitter sentiment analysis and visualization</p>
+                                </div>
+                                
+                                <ConfigurationSection 
+                                    config={config} 
+                                    setConfig={setConfig} 
+                                    onAnalyze={handleAnalyze}
+                                    isLoading={isLoading}
+                                />
+                                
+                                {isLoading && <LoadingComponent />}
+                                
+                                {tweets.length > 0 && !isLoading && (
+                                    <>
+                                        <MetricsSection tweets={tweets} />
+                                        <ChartsSection tweets={tweets} />
+                                    </>
+                                )}
+                            </>
+                        );
+                    
+                    case 'analytics':
+                        return (
+                            <>
+                                <div className="card fade-in">
+                                    <div className="card-header">
+                                        <span className="card-icon">📈</span>
+                                        <h2 className="card-title">Advanced Analytics</h2>
+                                    </div>
+                                    {tweets.length > 0 ? (
+                                        <ChartsSection tweets={tweets} />
+                                    ) : (
+                                        <p>No data available. Please run an analysis first.</p>
+                                    )}
+                                </div>
+                            </>
+                        );
+                    
+                    case 'tweets':
+                        return (
+                            <>
+                                {tweets.length > 0 ? (
+                                    <TweetSamplesSection tweets={tweets} />
+                                ) : (
+                                    <div className="card fade-in">
+                                        <div className="card-header">
+                                            <span className="card-icon">🐦</span>
+                                            <h2 className="card-title">Tweet Samples</h2>
+                                        </div>
+                                        <p>No tweets available. Please run an analysis first.</p>
+                                    </div>
+                                )}
+                            </>
+                        );
+                    
+                    case 'settings':
+                        return (
+                            <div className="card fade-in">
+                                <div className="card-header">
+                                    <span className="card-icon">⚙️</span>
+                                    <h2 className="card-title">Settings</h2>
+                                </div>
+                                <div className="config-grid">
+                                    <div>
+                                        <h3>API Configuration</h3>
+                                        <div className="form-group">
+                                            <label className="form-label">Twitter API Bearer Token</label>
+                                            <input
+                                                type="password"
+                                                className="form-input"
+                                                placeholder="Enter your Bearer Token"
+                                                value={config.bearerToken}
+                                                onChange={(e) => setConfig({...config, bearerToken: e.target.value})}
+                                            />
+                                        </div>
+                                        <div className="checkbox-container">
+                                            <input
+                                                type="checkbox"
+                                                className="checkbox"
+                                                checked={config.realTime}
+                                                onChange={(e) => setConfig({...config, realTime: e.target.checked})}
+                                            />
+                                            <label>Enable Real-time Updates</label>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3>Analysis Settings</h3>
+                                        <div className="form-group">
+                                            <label className="form-label">Default Language</label>
+                                            <select
+                                                className="form-select"
+                                                value={config.language}
+                                                onChange={(e) => setConfig({...config, language: e.target.value})}
+                                            >
+                                                <option value="en">English</option>
+                                                <option value="es">Spanish</option>
+                                                <option value="fr">French</option>
+                                                <option value="de">German</option>
+                                            </select>
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">Default Tweet Count</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                min="10"
+                                                max="500"
+                                                value={config.tweetCount}
+                                                onChange={(e) => setConfig({...config, tweetCount: parseInt(e.target.value)})}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    
+                    default:
+                        return <div>Section not found</div>;
+                }
+            };
+
+            return (
+                <div className="dashboard-container">
+                    <Navigation activeSection={activeSection} setActiveSection={setActiveSection} />
+                    <main className="main-content">
+                        {renderContent()}
+                    </main>
+                    
+                    <footer style={{
+                        textAlign: 'center',
+                        padding: '2rem',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                        <p>Built with ❤️ using React | Social Media Sentiment Analysis Dashboard</p>
+                        <p>For internship project purposes | Responsive & Interactive UI</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
